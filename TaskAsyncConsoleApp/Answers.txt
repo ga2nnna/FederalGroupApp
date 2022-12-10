@@ -1,0 +1,32 @@
+﻿1. How would you go about further investigating this issue?
+My initial steps when reading the issue and scanning through the code were:
+a. Identifying the issue keywords: 
+- crash, long run, random intervals
+- Write file action and read file action (n seconds) so its copy can be written to another place. 
+b. Analyse Potential crash
+There are potential causes for crashes here:
++ General Exception handling in Task async; Or how General Exception is handled?
++ Server is unaccessible for writing/read file: Was exception for this case handled?
++ Read/Write rights exception handling was there?
++ File is locked by one process (usually write) while another process try to access (usually read)
+
+2. What is the probable cause of the crashes?
+3 situations analysed above can be *general* potential causes, by looking into the code, 
+here are the causes identified:
+a. Exception Handling Issue:
+All 3 methods of FileUpdater class has wrong Exception handling approach for Task async: 
+Throw Exception inside catch block. This is called unhandled exception, and in general of coding, should be always avoided.
+In Task async, when this kind of code presents, the invoker usually has 2 types of implementation.
+I created class 'ExceptionTestProgram.cs' as an example of 2 implementation types
+- Have a try catch block surrounding the Task async method that is called to handle exception.
+(Method 'InvokerApproach1()')
+The Exception handling in the InvokerApproach1 would never be able to print out ALL the exceptions.
+Microsoft explains here for further understanding: https://learn.microsoft.com/en-us/dotnet/standard/parallel-programming/exception-handling-task-parallel-library
+
+- Do not have a try catch in the invoker method (method InvokerApproach2()) that calls the Task async.
+This would result in the crash.
+
+SOLUTIONS:
+- If go with InvokerApproach1(), shall need to implement the AggregateException as Microsoft suggested
+(method InvokerApproach3()). But, the Original exception 'OriginalTaskAsync exception' is lost.
+- 
